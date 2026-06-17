@@ -9,7 +9,7 @@ import MainNavigator from './MainNavigator';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
-  const { session, loading } = useAuth();
+  const { session, isDemoUser, loading } = useAuth();
 
   if (loading) {
     return (
@@ -21,7 +21,7 @@ export default function RootNavigator() {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {session ? (
+      {session || isDemoUser ? (
         <Stack.Screen name="Main" component={MainNavigator} />
       ) : (
         <Stack.Screen name="Auth" component={AuthNavigator} />

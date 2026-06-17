@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -12,10 +11,10 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import AppTextInput from '../components/AppTextInput';
 import AppButton from '../components/AppButton';
-import ScreenContainer from '../components/ScreenContainer';
 import colors from '../theme/colors';
 
 type Mode = 'login' | 'signup';
+
 
 export default function LoginScreen() {
   const { signIn, signUp, demoSignIn } = useAuth();
@@ -46,43 +45,40 @@ export default function LoginScreen() {
     setInfo('');
 
     if (!email.trim() || !password.trim()) {
-      setError('אנא הכנס אימייל וסיסמה.');
+      setError('יש למלא את כל השדות');
       return;
     }
     if (mode === 'signup' && !fullName.trim()) {
-      setError('אנא הכנס שם מלא.');
+      setError('יש למלא שם מלא');
       return;
     }
 
     setSubmitting(true);
     try {
       if (mode === 'login') {
-        const { error } = await signIn(email.trim(), password);
-        if (error) setError(error.message);
+        const { hebrewError } = await signIn(email.trim(), password);
+        if (hebrewError) setError(hebrewError);
+        // On success, onAuthStateChange fires → RootNavigator switches to Main automatically
       } else {
-        const { error, needsConfirmation } = await signUp(
+        const { hebrewError, needsConfirmation } = await signUp(
           email.trim(),
           password,
-          fullName.trim()
+          fullName.trim(),
         );
-        if (error) {
-          setError(error.message);
+        if (hebrewError) {
+          setError(hebrewError);
         } else if (needsConfirmation) {
-          setInfo('החשבון נוצר! נא אמת את האימייל שלך לפני ההתחברות.');
+          setInfo('החשבון נוצר! בדוק את האימייל שלך ואמת אותו לפני ההתחברות.');
         }
+        // If no confirmation needed, onAuthStateChange fires → navigates automatically
       }
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleDemo() {
-    setSubmitting(true);
-    try {
-      await demoSignIn();
-    } finally {
-      setSubmitting(false);
-    }
+  function handleDemo() {
+    demoSignIn();
   }
 
   return (
@@ -95,6 +91,7 @@ export default function LoginScreen() {
           <Text style={styles.title}>חניית השותפים</Text>
           <Text style={styles.subtitle}>ניהול חנייה משותפת בזמן אמת</Text>
 
+          {/* Mode toggle */}
           <View style={styles.toggleRow}>
             <TouchableOpacity
               style={[styles.toggleBtn, mode === 'login' && styles.toggleBtnActive]}
@@ -109,11 +106,12 @@ export default function LoginScreen() {
               onPress={() => switchMode('signup')}
             >
               <Text style={[styles.toggleText, mode === 'signup' && styles.toggleTextActive]}>
-                יצירת משתמש חדש
+                הרשמה
               </Text>
             </TouchableOpacity>
           </View>
 
+          {/* Full name — signup only */}
           {mode === 'signup' && (
             <AppTextInput
               placeholder="שם מלא"
@@ -151,7 +149,7 @@ export default function LoginScreen() {
           {info ? <Text style={styles.infoText}>{info}</Text> : null}
 
           <AppButton
-            title={mode === 'login' ? 'התחברות' : 'יצירת משתמש חדש'}
+            title={mode === 'login' ? 'התחברות' : 'יצירת חשבון'}
             onPress={handleSubmit}
             disabled={submitting}
             style={styles.submitBtn}

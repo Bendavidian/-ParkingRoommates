@@ -7,11 +7,13 @@ import ScreenContainer from '../components/ScreenContainer';
 import colors from '../theme/colors';
 
 export default function ProfileScreen() {
-  const { user, signOut } = useAuth();
+  const { user, isDemoUser, signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
 
-  const fullName = (user?.user_metadata?.full_name as string | undefined) ?? 'בן דוד';
-  const email = user?.email ?? 'bendben13@gmail.com';
+  const fullName = isDemoUser
+    ? 'משתמש הדגמה'
+    : ((user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? '');
+  const email = isDemoUser ? 'demo@example.com' : (user?.email ?? '');
 
   async function handleSignOut() {
     setSigningOut(true);
