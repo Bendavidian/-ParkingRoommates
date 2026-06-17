@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -11,11 +10,15 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useAuth } from '../hooks/useAuth';
+import AppTextInput from '../components/AppTextInput';
+import AppButton from '../components/AppButton';
+import ScreenContainer from '../components/ScreenContainer';
+import colors from '../theme/colors';
 
 type Mode = 'login' | 'signup';
 
 export default function LoginScreen() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, demoSignIn } = useAuth();
 
   const [mode, setMode] = useState<Mode>('login');
   const [fullName, setFullName] = useState('');
@@ -43,11 +46,11 @@ export default function LoginScreen() {
     setInfo('');
 
     if (!email.trim() || !password.trim()) {
-      setError('Email and password are required.');
+      setError('אנא הכנס אימייל וסיסמה.');
       return;
     }
     if (mode === 'signup' && !fullName.trim()) {
-      setError('Full name is required.');
+      setError('אנא הכנס שם מלא.');
       return;
     }
 
@@ -56,7 +59,6 @@ export default function LoginScreen() {
       if (mode === 'login') {
         const { error } = await signIn(email.trim(), password);
         if (error) setError(error.message);
-        // On success, onAuthStateChange fires → RootNavigator switches to Main automatically
       } else {
         const { error, needsConfirmation } = await signUp(
           email.trim(),
@@ -66,10 +68,18 @@ export default function LoginScreen() {
         if (error) {
           setError(error.message);
         } else if (needsConfirmation) {
-          setInfo('Account created! Check your email to confirm before signing in.');
+          setInfo('החשבון נוצר! נא אמת את האימייל שלך לפני ההתחברות.');
         }
-        // If no confirmation needed, onAuthStateChange fires → navigates automatically
       }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDemo() {
+    setSubmitting(true);
+    try {
+      await demoSignIn();
     } finally {
       setSubmitting(false);
     }
@@ -81,169 +91,166 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Parking Roommates</Text>
-        <Text style={styles.subtitle}>
-          {mode === 'login' ? 'Sign in to your account' : 'Create a new account'}
-        </Text>
+        <View style={styles.card}>
+          <Text style={styles.title}>חניית השותפים</Text>
+          <Text style={styles.subtitle}>ניהול חנייה משותפת בזמן אמת</Text>
 
-        {/* Mode toggle */}
-        <View style={styles.toggleRow}>
-          <TouchableOpacity
-            style={[styles.toggleBtn, mode === 'login' && styles.toggleBtnActive]}
-            onPress={() => switchMode('login')}
-          >
-            <Text style={[styles.toggleText, mode === 'login' && styles.toggleTextActive]}>
-              Login
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.toggleBtn, mode === 'signup' && styles.toggleBtnActive]}
-            onPress={() => switchMode('signup')}
-          >
-            <Text style={[styles.toggleText, mode === 'signup' && styles.toggleTextActive]}>
-              Sign Up
-            </Text>
-          </TouchableOpacity>
-        </View>
+          <View style={styles.toggleRow}>
+            <TouchableOpacity
+              style={[styles.toggleBtn, mode === 'login' && styles.toggleBtnActive]}
+              onPress={() => switchMode('login')}
+            >
+              <Text style={[styles.toggleText, mode === 'login' && styles.toggleTextActive]}>
+                התחברות
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleBtn, mode === 'signup' && styles.toggleBtnActive]}
+              onPress={() => switchMode('signup')}
+            >
+              <Text style={[styles.toggleText, mode === 'signup' && styles.toggleTextActive]}>
+                יצירת משתמש חדש
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-        {/* Full name — signup only */}
-        {mode === 'signup' && (
-          <TextInput
-            style={styles.input}
-            placeholder="Full name"
-            autoCapitalize="words"
-            autoCorrect={false}
-            value={fullName}
-            onChangeText={setFullName}
-            editable={!submitting}
-          />
-        )}
-
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          value={email}
-          onChangeText={setEmail}
-          editable={!submitting}
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          secureTextEntry
-          autoCapitalize="none"
-          value={password}
-          onChangeText={setPassword}
-          editable={!submitting}
-        />
-
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        {info ? <Text style={styles.infoText}>{info}</Text> : null}
-
-        <TouchableOpacity
-          style={[styles.submitBtn, submitting && styles.submitBtnDisabled]}
-          onPress={handleSubmit}
-          disabled={submitting}
-        >
-          {submitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.submitText}>
-              {mode === 'login' ? 'Sign In' : 'Create Account'}
-            </Text>
+          {mode === 'signup' && (
+            <AppTextInput
+              placeholder="שם מלא"
+              autoCapitalize="words"
+              autoCorrect={false}
+              value={fullName}
+              onChangeText={setFullName}
+              editable={!submitting}
+              style={styles.input}
+            />
           )}
-        </TouchableOpacity>
+
+          <AppTextInput
+            placeholder="אימייל"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            value={email}
+            onChangeText={setEmail}
+            editable={!submitting}
+            style={styles.input}
+          />
+
+          <AppTextInput
+            placeholder="סיסמה"
+            secureTextEntry
+            autoCapitalize="none"
+            value={password}
+            onChangeText={setPassword}
+            editable={!submitting}
+            style={styles.input}
+          />
+
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          {info ? <Text style={styles.infoText}>{info}</Text> : null}
+
+          <AppButton
+            title={mode === 'login' ? 'התחברות' : 'יצירת משתמש חדש'}
+            onPress={handleSubmit}
+            disabled={submitting}
+            style={styles.submitBtn}
+          />
+
+          <AppButton
+            title="כניסה למצב הדגמה"
+            onPress={handleDemo}
+            variant="secondary"
+            disabled={submitting}
+            style={styles.demoBtn}
+          />
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#fff' },
+  flex: { flex: 1, backgroundColor: colors.background },
   container: {
     flexGrow: 1,
-    alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
+    backgroundColor: colors.background,
+  },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: colors.cardShadow,
+    shadowOpacity: 1,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 6,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    color: colors.text,
     marginBottom: 6,
-    textAlign: 'center',
+    textAlign: 'right',
+    writingDirection: 'rtl',
   },
   subtitle: {
-    fontSize: 15,
-    color: '#666',
-    marginBottom: 32,
-    textAlign: 'center',
+    fontSize: 16,
+    color: colors.muted,
+    marginBottom: 24,
+    textAlign: 'right',
+    writingDirection: 'rtl',
   },
   toggleRow: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     borderWidth: 1,
-    borderColor: '#3b82f6',
-    borderRadius: 8,
+    borderColor: colors.primary,
+    borderRadius: 14,
     overflow: 'hidden',
-    marginBottom: 24,
-    width: '100%',
+    marginBottom: 22,
   },
   toggleBtn: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 14,
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
   },
   toggleBtnActive: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: colors.primary,
   },
   toggleText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#3b82f6',
+    color: colors.primary,
+    writingDirection: 'rtl',
   },
   toggleTextActive: {
     color: '#fff',
   },
   input: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    marginBottom: 12,
-    backgroundColor: '#f9fafb',
+    marginBottom: 14,
   },
   errorText: {
-    color: '#ef4444',
+    color: colors.danger,
     fontSize: 13,
-    marginBottom: 12,
-    textAlign: 'center',
+    marginBottom: 10,
+    textAlign: 'right',
+    writingDirection: 'rtl',
   },
   infoText: {
-    color: '#3b82f6',
+    color: colors.primary,
     fontSize: 13,
-    marginBottom: 12,
-    textAlign: 'center',
+    marginBottom: 10,
+    textAlign: 'right',
+    writingDirection: 'rtl',
   },
   submitBtn: {
-    width: '100%',
-    backgroundColor: '#3b82f6',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 4,
+    marginBottom: 12,
   },
-  submitBtnDisabled: {
-    opacity: 0.6,
-  },
-  submitText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
+  demoBtn: {
+    borderWidth: 1,
+    borderColor: colors.secondary,
   },
 });

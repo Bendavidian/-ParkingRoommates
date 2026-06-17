@@ -12,6 +12,7 @@ export type AuthContextValue = {
   signIn: (email: string, password: string) => Promise<SignInResult>;
   signUp: (email: string, password: string, fullName: string) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
+  demoSignIn: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -21,8 +22,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // onAuthStateChange fires immediately with the persisted session from AsyncStorage,
-    // then again on every sign-in / sign-out / token refresh.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, newSession) => {
@@ -48,12 +47,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: { data: { full_name: fullName } },
     });
-    // needsConfirmation = sign-up succeeded but Supabase requires email verification
     return { error, needsConfirmation: !error && !data.session };
   }
 
   async function signOut(): Promise<void> {
     await supabase.auth.signOut();
+    setSession(null);
+  }
+
+  async function demoSignIn(): Promise<void> {
+    const demoUser = {
+      id: 'demo-user',
+      email: 'bendben13@gmail.com',
+      app_metadata: {},
+      user_metadata: { full_name: 'בן דוד' },
+      aud: 'authenticated',
+      created_at: new Date().toISOString(),
+    } as User;
+
+    const demoSession = {
+      access_token: 'demo-token',
+      token_type: 'bearer',
+      expires_in: 3600,
+      refresh_token: 'demo-refresh',
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      provider_token: null,
+      provider_refresh_token: null,
+      user: demoUser,
+    } as Session;
+
+    setSession(demoSession);
+    setLoading(false);
   }
 
   return (
@@ -65,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         signUp,
         signOut,
+        demoSignIn,
       }}
     >
       {children}

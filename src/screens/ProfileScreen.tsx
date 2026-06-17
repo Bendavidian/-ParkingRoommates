@@ -1,98 +1,111 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useAuth } from '../hooks/useAuth';
+import AppButton from '../components/AppButton';
+import AppCard from '../components/AppCard';
+import ScreenContainer from '../components/ScreenContainer';
+import colors from '../theme/colors';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
 
-  const fullName = user?.user_metadata?.full_name as string | undefined;
-  const email = user?.email ?? '';
+  const fullName = (user?.user_metadata?.full_name as string | undefined) ?? 'בן דוד';
+  const email = user?.email ?? 'bendben13@gmail.com';
 
   async function handleSignOut() {
     setSigningOut(true);
     await signOut();
-    // RootNavigator switches back to Auth stack automatically via onAuthStateChange
+    setSigningOut(false);
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>
-          {(fullName ?? email).charAt(0).toUpperCase()}
-        </Text>
-      </View>
+    <ScreenContainer>
+      <Text style={styles.title}>הפרופיל שלי</Text>
+      <Text style={styles.subtitle}>פרטים אישיים וניהול חשבון</Text>
 
-      {fullName ? <Text style={styles.name}>{fullName}</Text> : null}
-      <Text style={styles.email}>{email}</Text>
+      <AppCard style={styles.profileCard}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>{fullName.charAt(0)}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.fieldLabel}>שם</Text>
+          <Text style={styles.fieldValue}>{fullName}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.fieldLabel}>אימייל</Text>
+          <Text style={styles.fieldValue}>{email}</Text>
+        </View>
+      </AppCard>
 
-      <TouchableOpacity
-        style={[styles.logoutBtn, signingOut && styles.logoutBtnDisabled]}
+      <AppButton title="הגדרות" onPress={() => {}} variant="secondary" style={styles.button} />
+      <AppButton
+        title={signingOut ? 'מתנתק...' : 'התנתקות'}
         onPress={handleSignOut}
+        variant="danger"
         disabled={signingOut}
-      >
-        {signingOut ? (
-          <ActivityIndicator color="#ef4444" />
-        ) : (
-          <Text style={styles.logoutText}>Sign Out</Text>
-        )}
-      </TouchableOpacity>
-    </View>
+        style={styles.button}
+      />
+      {signingOut ? <ActivityIndicator color={colors.danger} style={styles.loading} /> : null}
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    padding: 24,
+  title: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 6,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  subtitle: {
+    color: colors.muted,
+    fontSize: 15,
+    marginBottom: 18,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  profileCard: {
+    paddingVertical: 24,
+    marginBottom: 22,
   },
   avatar: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#3b82f6',
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
+    alignSelf: 'flex-end',
   },
   avatarText: {
-    fontSize: 28,
-    fontWeight: 'bold',
     color: '#fff',
-  },
-  name: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: '700',
-    marginBottom: 4,
   },
-  email: {
+  infoRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  fieldLabel: {
+    color: colors.muted,
     fontSize: 15,
-    color: '#6b7280',
-    marginBottom: 40,
+    writingDirection: 'rtl',
   },
-  logoutBtn: {
-    borderWidth: 1.5,
-    borderColor: '#ef4444',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 40,
-    alignItems: 'center',
-  },
-  logoutBtnDisabled: {
-    opacity: 0.6,
-  },
-  logoutText: {
-    color: '#ef4444',
+  fieldValue: {
+    color: colors.text,
     fontSize: 15,
     fontWeight: '600',
+    writingDirection: 'rtl',
+  },
+  button: {
+    marginBottom: 14,
+  },
+  loading: {
+    marginTop: 8,
   },
 });
