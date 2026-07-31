@@ -10,8 +10,17 @@
 import { ok, err } from '../lib/result';
 import type { Result } from '../lib/result';
 import { getCurrentUserId } from '../lib/auth';
+import { isDemoMode } from '../lib/demoMode';
 import { QueueRepository } from '../repositories/QueueRepository';
+import { MockQueueRepository } from '../repositories/mock/MockQueueRepository';
 import type { ParkingQueueItem, ParkingQueueItemWithProfile } from '../types/database';
+
+// Demo mode has no DB connection — route reads/writes to the in-memory mock
+// instead. Resolved per call so switching in/out of demo mode mid-session
+// picks up the right source immediately.
+function queueRepo() {
+  return isDemoMode() ? MockQueueRepository : QueueRepository;
+}
 
 export const QueueService = {
   /**
@@ -19,7 +28,7 @@ export const QueueService = {
    * No auth required — all roommates can see who is waiting.
    */
   async getQueue(): Promise<Result<ParkingQueueItemWithProfile[]>> {
-    return QueueRepository.getQueue();
+    return queueRepo().getQueue();
   },
 
   /**
@@ -31,13 +40,13 @@ export const QueueService = {
     const userId = await getCurrentUserId();
     if (!userId) return err('You must be signed in to join the queue.');
 
-    const queueResult = await QueueRepository.getQueue();
+    const queueResult = await queueRepo().getQueue();
     if (!queueResult.ok) return queueResult;
 
     const alreadyWaiting = queueResult.data.some((item) => item.user_id === userId);
     if (alreadyWaiting) return err('You are already in the queue.');
 
-    return QueueRepository.joinQueue(userId);
+    return queueRepo().joinQueue(userId);
   },
 
   /**
@@ -46,7 +55,7 @@ export const QueueService = {
   async leaveQueue(): Promise<Result<ParkingQueueItem>> {
     const userId = await getCurrentUserId();
     if (!userId) return err('You must be signed in to leave the queue.');
-    return QueueRepository.leaveQueue(userId);
+    return queueRepo().leaveQueue(userId);
   },
 
   /**
@@ -56,11 +65,11 @@ export const QueueService = {
    * Returns null (not an error) when the queue is empty.
    */
   async serveNextInQueue(): Promise<Result<ParkingQueueItem | null>> {
-    const queueResult = await QueueRepository.getQueue();
+    const queueResult = await queueRepo().getQueue();
     if (!queueResult.ok) return queueResult;
     if (queueResult.data.length === 0) return ok(null);
 
     const next = queueResult.data[0];
-    return QueueRepository.serveItem(next.id);
+    return queueRepo().serveItem(next.id);
   },
 };

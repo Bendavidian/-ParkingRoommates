@@ -1,6 +1,7 @@
 import React, { createContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { setDemoMode } from '../lib/demoMode';
 
 // ---------------------------------------------------------------------------
 // Hebrew error mapping — keeps all Supabase error strings out of UI components
@@ -102,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signOut(): Promise<void> {
     if (isDemoUser) {
       // Demo mode has no real Supabase session — just clear the flag
+      setDemoMode(false);
       setIsDemoUser(false);
       return;
     }
@@ -109,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function demoSignIn(): void {
+    setDemoMode(true);
     setIsDemoUser(true);
   }
 
