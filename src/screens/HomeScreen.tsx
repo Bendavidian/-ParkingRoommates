@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Animated, Easing } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import AppCard from '../components/AppCard';
 import AppButton from '../components/AppButton';
-import SectionTitle from '../components/SectionTitle';
 import ScreenContainer from '../components/ScreenContainer';
 import EmptyState from '../components/EmptyState';
+import Avatar from '../components/Avatar';
 import colors from '../theme/colors';
+import fonts from '../theme/fonts';
 import { useAuth } from '../hooks/useAuth';
 import { DEMO_USER_ID } from '../lib/demoMode';
 import { ParkingService } from '../services/parkingService';
@@ -16,18 +16,7 @@ import type { ParkingSessionWithProfile, ParkingQueueItemWithProfile } from '../
 
 type ActionKind = 'park' | 'finish' | 'join' | 'leave' | null;
 
-const FREE_GRADIENT = ['#16a34a', '#0d9488'] as const;
-const OCCUPIED_GRADIENT = ['#dc2626', '#ea580c'] as const;
-
-const AVATAR_PALETTE = ['#2563eb', '#7c3aed', '#0d9488', '#d97706', '#db2777', '#4f46e5'];
-
-function avatarColor(seed: string): string {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
-  return AVATAR_PALETTE[hash % AVATAR_PALETTE.length];
-}
-
-/** mm:ss elapsed since startIso, ticking display for the live hero timer. */
+/** mm:ss elapsed since startIso, ticking display for the live status timer. */
 function formatElapsed(startIso: string, nowMs: number): string {
   const totalSeconds = Math.max(0, Math.floor((nowMs - new Date(startIso).getTime()) / 1000));
   const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
@@ -67,18 +56,18 @@ export default function HomeScreen() {
     loadData().finally(() => setLoading(false));
   }, [loadData]);
 
-  // Live-ticking clock for the hero timer — the one piece of the screen that
-  // keeps moving on its own instead of only reacting to button presses.
+  // Live-ticking clock for the status timer — the one piece of the screen
+  // that keeps moving on its own instead of only reacting to button presses.
   useEffect(() => {
     if (!session) return;
     const id = setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(id);
   }, [session?.id]);
 
-  // --- Entrance choreography: header → hero → actions → queue, staggered ---
+  // --- Entrance choreography: masthead → status → actions → queue ---
   const enter = useRef({
-    header: new Animated.Value(0),
-    hero: new Animated.Value(0),
+    masthead: new Animated.Value(0),
+    status: new Animated.Value(0),
     actions: new Animated.Value(0),
     queue: new Animated.Value(0),
   }).current;
@@ -87,8 +76,8 @@ export default function HomeScreen() {
     if (loading) return;
     const cfg = { duration: 420, useNativeDriver: true, easing: Easing.out(Easing.cubic) };
     Animated.stagger(90, [
-      Animated.timing(enter.header, { toValue: 1, ...cfg }),
-      Animated.timing(enter.hero, { toValue: 1, ...cfg }),
+      Animated.timing(enter.masthead, { toValue: 1, ...cfg }),
+      Animated.timing(enter.status, { toValue: 1, ...cfg }),
       Animated.timing(enter.actions, { toValue: 1, ...cfg }),
       Animated.timing(enter.queue, { toValue: 1, ...cfg }),
     ]).start();
@@ -101,7 +90,7 @@ export default function HomeScreen() {
     };
   }
 
-  // Cross-fades the hero between the free and occupied gradients instead of
+  // Cross-fades the status wash/stripe between free and occupied instead of
   // hard-cutting the color when the spot changes hands.
   const statusAnim = useRef(new Animated.Value(session ? 1 : 0)).current;
   useEffect(() => {
@@ -146,60 +135,67 @@ export default function HomeScreen() {
 
   return (
     <ScreenContainer>
-      <Animated.View style={[styles.header, riseStyle(enter.header)]}>
-        <Text style={styles.greeting}>שלום {greetingName} 👋</Text>
-        <Text style={styles.subheading}>מה מצב החנייה?</Text>
+      <Animated.View style={[styles.masthead, riseStyle(enter.masthead)]}>
+        <View style={styles.logoTile}>
+          <Text style={styles.logoEmoji}>🅿️</Text>
+        </View>
+        <View style={styles.mastheadText}>
+          <Text style={styles.eyebrow}>PARKING · ROOMMATES</Text>
+          <Text style={styles.greeting}>שלום, {greetingName} 👋</Text>
+        </View>
       </Animated.View>
 
       {loading ? (
-        <ActivityIndicator color={colors.primary} style={styles.loading} />
+        <ActivityIndicator color={colors.accent} style={styles.loading} />
       ) : (
         <>
-          <Animated.View style={[styles.heroShadow, riseStyle(enter.hero)]}>
-            <View style={styles.heroClip}>
-              <Animated.View
-                style={[
-                  StyleSheet.absoluteFillObject,
-                  { opacity: statusAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) },
-                ]}
-              >
-                <LinearGradient colors={FREE_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFillObject} />
-              </Animated.View>
-              <Animated.View style={[StyleSheet.absoluteFillObject, { opacity: statusAnim }]}>
-                <LinearGradient colors={OCCUPIED_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFillObject} />
-              </Animated.View>
+          <Animated.View style={[styles.statusPanel, riseStyle(enter.status)]}>
+            <Animated.View
+              style={[
+                StyleSheet.absoluteFillObject,
+                { backgroundColor: colors.accentSoft, opacity: statusAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) },
+              ]}
+            />
+            <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.dangerSoft, opacity: statusAnim }]} />
 
-              <View style={styles.heroContent}>
-                <View style={styles.heroTitleRow}>
-                  <Text style={styles.heroEmoji}>🅿️</Text>
-                  <Text style={styles.heroTitle}>{session ? 'החנייה תפוסה' : 'החנייה פנויה!'}</Text>
+            <Animated.View
+              style={[styles.statusStripe, { backgroundColor: colors.accent, opacity: statusAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }]}
+            />
+            <Animated.View style={[styles.statusStripe, { backgroundColor: colors.danger, opacity: statusAnim }]} />
+
+            <View style={styles.statusInner}>
+              <View style={styles.statusTopRow}>
+                <View style={[styles.statusPill, { backgroundColor: session ? colors.danger : colors.accent }]}>
+                  <Text style={styles.statusPillText}>{session ? 'תפוסה' : 'פנוי'}</Text>
                 </View>
-
-                {session ? (
-                  <>
-                    <Text style={styles.heroLine}>מחנה כרגע: {session.profile.full_name}</Text>
-                    <View style={styles.liveRow}>
-                      <Animated.View
-                        style={[
-                          styles.liveDot,
-                          {
-                            opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }),
-                            transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1.15] }) }],
-                          },
-                        ]}
-                      />
-                      <Text style={styles.heroTimer}>{elapsed} בחניה</Text>
-                    </View>
-                    {session.planned_end_time ? (
-                      <View style={styles.heroPill}>
-                        <Text style={styles.heroPillText}>עד {formatTime(session.planned_end_time)}</Text>
-                      </View>
-                    ) : null}
-                  </>
-                ) : (
-                  <Text style={styles.heroLine}>המקום פנוי כרגע — קדימה!</Text>
-                )}
+                <Text style={styles.statusTitle}>{session ? 'החנייה תפוסה' : 'החנייה פנויה'}</Text>
               </View>
+
+              {session ? (
+                <>
+                  <Text style={styles.statusLine}>מחנה כרגע: {session.profile.full_name}</Text>
+                  <View style={styles.liveRow}>
+                    <Animated.View
+                      style={[
+                        styles.liveDot,
+                        {
+                          opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }),
+                          transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1.2] }) }],
+                        },
+                      ]}
+                    />
+                    <Text style={styles.statusTimer}>{elapsed}</Text>
+                    <Text style={styles.statusTimerLabel}>בחניה</Text>
+                  </View>
+                  {session.planned_end_time ? (
+                    <View style={styles.endPill}>
+                      <Text style={styles.endPillText}>עד {formatTime(session.planned_end_time)}</Text>
+                    </View>
+                  ) : null}
+                </>
+              ) : (
+                <Text style={styles.statusLine}>המקום פנוי כרגע — קדימה!</Text>
+              )}
             </View>
           </Animated.View>
 
@@ -207,23 +203,24 @@ export default function HomeScreen() {
 
           <Animated.View style={riseStyle(enter.actions)}>
             <AppCard style={styles.actionCard}>
-              <Text style={styles.sectionLabel}>פעולות מהירות</Text>
+              <Text style={styles.panelLabel}>פעולות מהירות</Text>
               <View style={styles.actionRow}>
                 {!session ? (
                   <AppButton
-                    title="🚗 אני מחנה עכשיו"
+                    title="אני מחנה עכשיו"
                     onPress={() => runAction('park', () => ParkingService.startSession())}
                     disabled={pendingAction !== null}
+                    showArrow
                     style={styles.actionBtn}
                   />
                 ) : null}
 
                 {isMine ? (
                   <AppButton
-                    title="✅ פיניתי את החנייה"
+                    title="פיניתי את החנייה"
                     onPress={() => runAction('finish', () => ParkingService.finishSession())}
-                    variant="success"
                     disabled={pendingAction !== null}
+                    showArrow
                     style={styles.actionBtn}
                   />
                 ) : null}
@@ -232,27 +229,30 @@ export default function HomeScreen() {
               {session && !isMine ? (
                 isWaiting ? (
                   <AppButton
-                    title="✋ בטל המתנה"
+                    title="בטל המתנה"
                     onPress={() => runAction('leave', () => QueueService.leaveQueue())}
-                    variant="ghost"
+                    variant="outline"
                     disabled={pendingAction !== null}
                   />
                 ) : (
                   <AppButton
-                    title="⏳ אני ממתין לחנייה"
+                    title="אני ממתין לחנייה"
                     onPress={() => runAction('join', () => QueueService.joinQueue())}
-                    variant="secondary"
+                    variant="outline"
                     disabled={pendingAction !== null}
                   />
                 )
               ) : null}
 
-              {pendingAction ? <ActivityIndicator color={colors.primary} style={styles.loading} /> : null}
+              {pendingAction ? <ActivityIndicator color={colors.accent} style={styles.loading} /> : null}
             </AppCard>
           </Animated.View>
 
           <Animated.View style={riseStyle(enter.queue)}>
-            <SectionTitle title={`תור ממתינים${queue.length > 0 ? ` (${queue.length})` : ''}`} />
+            <View style={styles.panelLabelRow}>
+              {queue.length > 0 ? <Text style={styles.panelCount}>({queue.length})</Text> : null}
+              <Text style={styles.panelLabel}>תור ממתינים</Text>
+            </View>
             {queue.length === 0 ? (
               <EmptyState message="אין ממתינים כרגע" />
             ) : (
@@ -260,9 +260,7 @@ export default function HomeScreen() {
                 {queue.map((item, index) => (
                   <View key={item.id} style={styles.queueItem}>
                     <View style={styles.queueLeft}>
-                      <View style={[styles.avatar, { backgroundColor: avatarColor(item.user_id) }]}>
-                        <Text style={styles.avatarText}>{item.profile.full_name.charAt(0)}</Text>
-                      </View>
+                      <Avatar seed={item.user_id} label={item.profile.full_name} />
                       <Text style={styles.queueName}>
                         {item.profile.full_name}
                         {item.user_id === currentUserId ? ' (אני)' : ''}
@@ -281,118 +279,162 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
+  masthead: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 12,
     marginBottom: 18,
   },
-  greeting: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.text,
-    textAlign: 'right',
+  logoTile: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    backgroundColor: colors.logoInk,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoEmoji: {
+    fontSize: 20,
+  },
+  mastheadText: {
+    gap: 3,
+  },
+  eyebrow: {
+    fontFamily: fonts.monoBold,
+    fontSize: 10.5,
+    letterSpacing: 1.2,
+    color: colors.muted,
     writingDirection: 'rtl',
   },
-  subheading: {
-    fontSize: 16,
-    color: colors.muted,
-    marginTop: 6,
+  greeting: {
+    fontFamily: fonts.displayExtraBold,
+    fontSize: 23,
+    color: colors.ink,
     textAlign: 'right',
     writingDirection: 'rtl',
   },
   loading: {
     marginTop: 24,
   },
-  heroShadow: {
-    marginBottom: 18,
-    borderRadius: 22,
-    shadowColor: colors.cardShadow,
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
-  },
-  heroClip: {
-    borderRadius: 22,
+  statusPanel: {
+    marginBottom: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
     overflow: 'hidden',
-    minHeight: 150,
+    backgroundColor: colors.surface,
   },
-  heroContent: {
-    padding: 20,
+  statusStripe: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: 5,
   },
-  heroTitleRow: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
+  statusInner: {
+    padding: 18,
+    alignItems: 'flex-end',
     gap: 8,
-    marginBottom: 10,
   },
-  heroEmoji: {
-    fontSize: 22,
+  statusTopRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    gap: 10,
   },
-  heroTitle: {
-    fontSize: 23,
-    fontWeight: '700',
+  statusTitle: {
+    fontFamily: fonts.displayBold,
+    fontSize: 19,
+    color: colors.ink,
+  },
+  statusPill: {
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  statusPillText: {
+    fontFamily: fonts.monoBold,
+    fontSize: 11,
+    letterSpacing: 0.5,
     color: '#fff',
-    writingDirection: 'rtl',
   },
-  heroLine: {
-    color: 'rgba(255,255,255,0.92)',
-    fontSize: 15,
-    writingDirection: 'rtl',
+  statusLine: {
+    fontFamily: fonts.bodyRegular,
+    fontSize: 14.5,
+    color: colors.inkSoft,
     textAlign: 'right',
-    marginBottom: 4,
+    writingDirection: 'rtl',
   },
   liveRow: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: 8,
-    marginTop: 6,
+    marginTop: 2,
   },
   liveDot: {
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    backgroundColor: '#fff',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.danger,
   },
-  heroTimer: {
-    color: '#fff',
+  statusTimer: {
+    fontFamily: fonts.monoBold,
     fontSize: 16,
-    fontWeight: '700',
-    writingDirection: 'rtl',
+    color: colors.ink,
   },
-  heroPill: {
-    alignSelf: 'flex-end',
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    marginTop: 10,
-  },
-  heroPillText: {
-    color: '#fff',
+  statusTimerLabel: {
+    fontFamily: fonts.bodyRegular,
     fontSize: 13,
-    fontWeight: '600',
-    writingDirection: 'rtl',
+    color: colors.muted,
+  },
+  endPill: {
+    backgroundColor: 'rgba(16,35,26,0.06)',
+    borderRadius: 999,
+    paddingHorizontal: 11,
+    paddingVertical: 4,
+    marginTop: 2,
+  },
+  endPillText: {
+    fontFamily: fonts.monoBold,
+    fontSize: 11.5,
+    color: colors.inkSoft,
   },
   errorText: {
     color: colors.danger,
+    fontFamily: fonts.bodySemiBold,
     fontSize: 14,
     marginBottom: 12,
     textAlign: 'right',
     writingDirection: 'rtl',
   },
   actionCard: {
-    marginBottom: 18,
+    marginBottom: 16,
   },
-  sectionLabel: {
-    color: colors.text,
-    fontWeight: '700',
-    marginBottom: 12,
+  panelLabel: {
+    fontFamily: fonts.monoBold,
+    fontSize: 11,
+    letterSpacing: 1,
+    color: colors.muted,
     textAlign: 'right',
     writingDirection: 'rtl',
   },
+  panelLabelRow: {
+    flexDirection: 'row-reverse',
+    alignItems: 'baseline',
+    gap: 5,
+    marginBottom: 12,
+  },
+  panelCount: {
+    fontFamily: fonts.monoBold,
+    fontSize: 11,
+    color: colors.muted,
+  },
   actionRow: {
     flexDirection: 'row-reverse',
-    gap: 12,
-    marginBottom: 12,
+    gap: 10,
+    marginTop: 12,
+    marginBottom: 10,
   },
   actionBtn: {
     flex: 1,
@@ -404,7 +446,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 11,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
@@ -413,25 +455,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
-  },
   queueIndex: {
+    fontFamily: fonts.monoBold,
     color: colors.muted,
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 12.5,
   },
   queueName: {
-    color: colors.text,
+    fontFamily: fonts.bodySemiBold,
+    color: colors.ink,
     fontSize: 15,
     writingDirection: 'rtl',
     textAlign: 'right',

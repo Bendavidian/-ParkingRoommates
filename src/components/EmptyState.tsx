@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import colors from '../theme/colors';
+import fonts from '../theme/fonts';
 
 export default function EmptyState({ message }: { message: string }) {
   return (
@@ -12,11 +13,12 @@ export default function EmptyState({ message }: { message: string }) {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 24,
+    padding: 22,
     borderRadius: 18,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderStyle: 'dashed',
+    borderColor: colors.borderStrong,
     alignItems: 'flex-end',
     justifyContent: 'center',
     marginTop: 16,
@@ -24,7 +26,8 @@ const styles = StyleSheet.create({
   },
   text: {
     color: colors.muted,
-    fontSize: 15,
+    fontFamily: fonts.bodyRegular,
+    fontSize: 14.5,
     textAlign: 'right',
     writingDirection: 'rtl',
   },

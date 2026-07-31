@@ -3,7 +3,9 @@ import { View, Text, StyleSheet } from 'react-native';
 import ScreenContainer from '../components/ScreenContainer';
 import AppCard from '../components/AppCard';
 import AppButton from '../components/AppButton';
+import SectionTitle from '../components/SectionTitle';
 import colors from '../theme/colors';
+import fonts from '../theme/fonts';
 
 const requests = [
   'ראשון 20:00 עד שני 08:00',
@@ -13,9 +15,8 @@ const requests = [
 export default function ScheduleScreen() {
   return (
     <ScreenContainer>
-      <Text style={styles.title}>תכנון חנייה</Text>
-      <Text style={styles.subtitle}>נהל בקשות עתידיות בקלות</Text>
-      <AppButton title="הוסף בקשה עתידית" onPress={() => {}} variant="secondary" style={styles.addButton} />
+      <SectionTitle title="תכנון חנייה" subtitle="נהל בקשות עתידיות בקלות" />
+      <AppButton title="הוסף בקשה עתידית" onPress={() => {}} showArrow style={styles.addButton} />
 
       {requests.map((item) => (
         <AppCard key={item} style={styles.requestCard}>
@@ -32,21 +33,6 @@ export default function ScheduleScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 6,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-  },
-  subtitle: {
-    color: colors.muted,
-    fontSize: 15,
-    marginBottom: 18,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-  },
   addButton: {
     marginBottom: 22,
   },
@@ -54,7 +40,8 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   requestText: {
-    color: colors.text,
+    fontFamily: fonts.bodySemiBold,
+    color: colors.ink,
     fontSize: 16,
     writingDirection: 'rtl',
     textAlign: 'right',
@@ -63,20 +50,22 @@ const styles = StyleSheet.create({
     marginTop: 24,
     padding: 18,
     borderRadius: 18,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.accentSoft,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
   noteTitle: {
-    color: colors.text,
-    fontWeight: '700',
-    fontSize: 15,
+    fontFamily: fonts.monoBold,
+    fontSize: 11,
+    letterSpacing: 1,
+    color: colors.accentStrong,
     marginBottom: 8,
     textAlign: 'right',
     writingDirection: 'rtl',
   },
   noteText: {
-    color: colors.muted,
+    fontFamily: fonts.bodyRegular,
+    color: colors.inkSoft,
     fontSize: 14,
     textAlign: 'right',
     writingDirection: 'rtl',

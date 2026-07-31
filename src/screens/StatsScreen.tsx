@@ -4,6 +4,7 @@ import ScreenContainer from '../components/ScreenContainer';
 import AppCard from '../components/AppCard';
 import SectionTitle from '../components/SectionTitle';
 import colors from '../theme/colors';
+import fonts from '../theme/fonts';
 
 const stats = [
   { label: 'שבוע אחרון', values: [{ name: 'בן', hours: 12 }, { name: 'דני', hours: 9 }, { name: 'אורי', hours: 7 }] },
@@ -40,15 +41,16 @@ export default function StatsScreen() {
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 18,
+    marginBottom: 16,
   },
   periodTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontFamily: fonts.monoBold,
+    fontSize: 11,
+    letterSpacing: 1,
+    color: colors.muted,
     marginBottom: 16,
     textAlign: 'right',
     writingDirection: 'rtl',
-    color: colors.text,
   },
   statRow: {
     marginBottom: 16,
@@ -59,26 +61,29 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   statName: {
-    color: colors.text,
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
     fontSize: 15,
-    fontWeight: '600',
     writingDirection: 'rtl',
   },
   statValue: {
+    fontFamily: fonts.monoMedium,
     color: colors.muted,
-    fontSize: 15,
+    fontSize: 14,
     writingDirection: 'rtl',
   },
   progressBarBackground: {
     width: '100%',
-    height: 10,
+    height: 8,
     borderRadius: 999,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
     borderRadius: 999,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accent,
   },
 });

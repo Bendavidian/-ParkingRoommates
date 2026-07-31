@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import colors from '../theme/colors';
+import fonts from '../theme/fonts';
 import typography from '../theme/typography';
 
 type SectionTitleProps = {
@@ -22,15 +23,18 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   title: {
-    color: colors.text,
+    color: colors.ink,
+    fontFamily: fonts.displayBold,
     fontSize: typography.title,
-    fontWeight: typography.strong,
     textAlign: 'right',
+    writingDirection: 'rtl',
   },
   subtitle: {
     color: colors.muted,
+    fontFamily: fonts.bodyRegular,
     fontSize: typography.body,
     marginTop: 4,
     textAlign: 'right',
+    writingDirection: 'rtl',
   },
 });

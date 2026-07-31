@@ -12,6 +12,7 @@ import { useAuth } from '../hooks/useAuth';
 import AppTextInput from '../components/AppTextInput';
 import AppButton from '../components/AppButton';
 import colors from '../theme/colors';
+import fonts from '../theme/fonts';
 
 type Mode = 'login' | 'signup';
 
@@ -87,6 +88,13 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <View style={styles.masthead}>
+          <View style={styles.logoTile}>
+            <Text style={styles.logoEmoji}>🅿️</Text>
+          </View>
+          <Text style={styles.eyebrow}>PARKING · ROOMMATES</Text>
+        </View>
+
         <View style={styles.card}>
           <Text style={styles.title}>חניית השותפים</Text>
           <Text style={styles.subtitle}>ניהול חנייה משותפת בזמן אמת</Text>
@@ -152,15 +160,15 @@ export default function LoginScreen() {
             title={mode === 'login' ? 'התחברות' : 'יצירת חשבון'}
             onPress={handleSubmit}
             disabled={submitting}
+            showArrow
             style={styles.submitBtn}
           />
 
           <AppButton
             title="כניסה למצב הדגמה"
             onPress={handleDemo}
-            variant="secondary"
+            variant="outline"
             disabled={submitting}
-            style={styles.demoBtn}
           />
         </View>
       </ScrollView>
@@ -176,35 +184,57 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: colors.background,
   },
+  masthead: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 10,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  logoTile: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: colors.logoInk,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoEmoji: {
+    fontSize: 17,
+  },
+  eyebrow: {
+    fontFamily: fonts.monoBold,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    color: colors.muted,
+  },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 24,
+    borderRadius: 22,
     padding: 24,
-    shadowColor: colors.cardShadow,
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.text,
+    fontFamily: fonts.displayExtraBold,
+    fontSize: 26,
+    color: colors.ink,
     marginBottom: 6,
     textAlign: 'right',
     writingDirection: 'rtl',
   },
   subtitle: {
-    fontSize: 16,
+    fontFamily: fonts.bodyRegular,
     color: colors.muted,
+    fontSize: 15,
     marginBottom: 24,
     textAlign: 'right',
     writingDirection: 'rtl',
   },
   toggleRow: {
     flexDirection: 'row-reverse',
-    borderWidth: 1,
-    borderColor: colors.primary,
+    borderWidth: 1.5,
+    borderColor: colors.accent,
     borderRadius: 14,
     overflow: 'hidden',
     marginBottom: 22,
@@ -216,12 +246,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   toggleBtnActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accent,
   },
   toggleText: {
+    fontFamily: fonts.bodyBold,
     fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
+    color: colors.accent,
     writingDirection: 'rtl',
   },
   toggleTextActive: {
@@ -231,6 +261,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   errorText: {
+    fontFamily: fonts.bodySemiBold,
     color: colors.danger,
     fontSize: 13,
     marginBottom: 10,
@@ -238,7 +269,8 @@ const styles = StyleSheet.create({
     writingDirection: 'rtl',
   },
   infoText: {
-    color: colors.primary,
+    fontFamily: fonts.bodySemiBold,
+    color: colors.accentStrong,
     fontSize: 13,
     marginBottom: 10,
     textAlign: 'right',
@@ -246,9 +278,5 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     marginBottom: 12,
-  },
-  demoBtn: {
-    borderWidth: 1,
-    borderColor: colors.secondary,
   },
 });

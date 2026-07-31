@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import ScreenContainer from '../components/ScreenContainer';
 import AppCard from '../components/AppCard';
+import SectionTitle from '../components/SectionTitle';
 import colors from '../theme/colors';
+import fonts from '../theme/fonts';
 
 const history = [
   'בן חנה מ־18:30 עד 22:30',
@@ -12,8 +14,7 @@ const history = [
 export default function HistoryScreen() {
   return (
     <ScreenContainer>
-      <Text style={styles.title}>היסטוריית שימוש</Text>
-      <Text style={styles.subtitle}>חניה קודמת של כל אחד מהשותפים</Text>
+      <SectionTitle title="היסטוריית שימוש" subtitle="חניה קודמת של כל אחד מהשותפים" />
 
       {history.map((item) => (
         <AppCard key={item} style={styles.historyCard}>
@@ -25,26 +26,12 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 6,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-  },
-  subtitle: {
-    color: colors.muted,
-    fontSize: 15,
-    marginBottom: 18,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-  },
   historyCard: {
     marginBottom: 14,
   },
   historyText: {
-    color: colors.text,
+    fontFamily: fonts.bodySemiBold,
+    color: colors.ink,
     fontSize: 16,
     textAlign: 'right',
     writingDirection: 'rtl',

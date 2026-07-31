@@ -4,7 +4,10 @@ import { useAuth } from '../hooks/useAuth';
 import AppButton from '../components/AppButton';
 import AppCard from '../components/AppCard';
 import ScreenContainer from '../components/ScreenContainer';
+import SectionTitle from '../components/SectionTitle';
+import Avatar from '../components/Avatar';
 import colors from '../theme/colors';
+import fonts from '../theme/fonts';
 
 export default function ProfileScreen() {
   const { user, isDemoUser, signOut } = useAuth();
@@ -23,13 +26,10 @@ export default function ProfileScreen() {
 
   return (
     <ScreenContainer>
-      <Text style={styles.title}>הפרופיל שלי</Text>
-      <Text style={styles.subtitle}>פרטים אישיים וניהול חשבון</Text>
+      <SectionTitle title="הפרופיל שלי" subtitle="פרטים אישיים וניהול חשבון" />
 
       <AppCard style={styles.profileCard}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{fullName.charAt(0)}</Text>
-        </View>
+        <Avatar seed={user?.id ?? 'demo'} label={fullName || '?'} size={68} style={styles.avatar} />
         <View style={styles.infoRow}>
           <Text style={styles.fieldLabel}>שם</Text>
           <Text style={styles.fieldValue}>{fullName}</Text>
@@ -40,7 +40,7 @@ export default function ProfileScreen() {
         </View>
       </AppCard>
 
-      <AppButton title="הגדרות" onPress={() => {}} variant="secondary" style={styles.button} />
+      <AppButton title="הגדרות" onPress={() => {}} variant="outline" style={styles.button} />
       <AppButton
         title={signingOut ? 'מתנתק...' : 'התנתקות'}
         onPress={handleSignOut}
@@ -54,39 +54,13 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 6,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-  },
-  subtitle: {
-    color: colors.muted,
-    fontSize: 15,
-    marginBottom: 18,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-  },
   profileCard: {
     paddingVertical: 24,
     marginBottom: 22,
   },
   avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 18,
     alignSelf: 'flex-end',
-  },
-  avatarText: {
-    color: '#fff',
-    fontSize: 28,
-    fontWeight: '700',
   },
   infoRow: {
     flexDirection: 'row-reverse',
@@ -94,14 +68,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   fieldLabel: {
+    fontFamily: fonts.bodyRegular,
     color: colors.muted,
     fontSize: 15,
     writingDirection: 'rtl',
   },
   fieldValue: {
-    color: colors.text,
+    fontFamily: fonts.bodySemiBold,
+    color: colors.ink,
     fontSize: 15,
-    fontWeight: '600',
     writingDirection: 'rtl',
   },
   button: {
