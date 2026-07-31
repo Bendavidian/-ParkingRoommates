@@ -11,9 +11,22 @@
 import { ok, err } from '../lib/result';
 import type { Result } from '../lib/result';
 import { getCurrentUserId } from '../lib/auth';
+import { isDemoMode } from '../lib/demoMode';
 import { ParkingRepository } from '../repositories/ParkingRepository';
 import { QueueRepository } from '../repositories/QueueRepository';
+import { MockParkingRepository } from '../repositories/mock/MockParkingRepository';
+import { MockQueueRepository } from '../repositories/mock/MockQueueRepository';
 import type { ParkingSession, ParkingSessionWithProfile } from '../types/database';
+
+// Demo mode has no DB connection — route reads/writes to the in-memory mocks
+// instead. Resolved per call (not once at import time) so switching in/out of
+// demo mode mid-session picks up the right source immediately.
+function parkingRepo() {
+  return isDemoMode() ? MockParkingRepository : ParkingRepository;
+}
+function queueRepo() {
+  return isDemoMode() ? MockQueueRepository : QueueRepository;
+}
 
 export const ParkingService = {
   /**
@@ -22,7 +35,7 @@ export const ParkingService = {
    * roommates.
    */
   async getActiveSession(): Promise<Result<ParkingSessionWithProfile | null>> {
-    return ParkingRepository.getCurrentSession();
+    return parkingRepo().getCurrentSession();
   },
 
   /**
@@ -37,7 +50,7 @@ export const ParkingService = {
     const userId = await getCurrentUserId();
     if (!userId) return err('You must be signed in to use the parking spot.');
 
-    return ParkingRepository.createSession({ userId, plannedEndTime, note });
+    return parkingRepo().createSession({ userId, plannedEndTime, note });
   },
 
   /**
@@ -51,21 +64,21 @@ export const ParkingService = {
     if (!userId) return err('You must be signed in to finish a session.');
 
     // Ownership check — read the active session first
-    const sessionResult = await ParkingRepository.getCurrentSession();
+    const sessionResult = await parkingRepo().getCurrentSession();
     if (!sessionResult.ok) return sessionResult;
     if (!sessionResult.data) return err('There is no active parking session to finish.');
     if (sessionResult.data.user_id !== userId) {
       return err('You can only finish your own parking session.');
     }
 
-    const finishResult = await ParkingRepository.finishSession(userId);
+    const finishResult = await parkingRepo().finishSession(userId);
     if (!finishResult.ok) return finishResult;
 
     // Best-effort: serve the next person in the queue.
     // We do not fail the overall operation if this step errors.
-    const queueResult = await QueueRepository.getQueue();
+    const queueResult = await queueRepo().getQueue();
     if (queueResult.ok && queueResult.data.length > 0) {
-      await QueueRepository.serveItem(queueResult.data[0].id);
+      await queueRepo().serveItem(queueResult.data[0].id);
     }
 
     return finishResult;
@@ -79,10 +92,10 @@ export const ParkingService = {
     filterByCurrentUser = false,
   ): Promise<Result<ParkingSessionWithProfile[]>> {
     if (!filterByCurrentUser) {
-      return ParkingRepository.getHistory();
+      return parkingRepo().getHistory();
     }
     const userId = await getCurrentUserId();
     if (!userId) return err('You must be signed in to view your history.');
-    return ParkingRepository.getHistory(userId);
+    return parkingRepo().getHistory(userId);
   },
 };
