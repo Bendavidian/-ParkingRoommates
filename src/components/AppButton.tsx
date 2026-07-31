@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   TouchableOpacity,
+  Animated,
   Text,
   StyleSheet,
   ViewStyle,
@@ -26,6 +27,19 @@ export default function AppButton({
   style,
   textStyle,
 }: AppButtonProps) {
+  // Press feedback is a scale spring on this inner layer rather than
+  // TouchableOpacity's built-in fade — pairs better with the gradient/solid
+  // fills used across variants.
+  const scale = useRef(new Animated.Value(1)).current;
+
+  function handlePressIn() {
+    Animated.spring(scale, { toValue: 0.96, useNativeDriver: true, speed: 40, bounciness: 6 }).start();
+  }
+
+  function handlePressOut() {
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 40, bounciness: 6 }).start();
+  }
+
   const backgroundColor =
     variant === 'primary'
       ? colors.primary
@@ -42,16 +56,21 @@ export default function AppButton({
 
   return (
     <TouchableOpacity
-      activeOpacity={0.8}
+      activeOpacity={1}
       onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={disabled}
-      style={[
-        styles.button,
-        { backgroundColor, borderColor, opacity: disabled ? 0.6 : 1 },
-        style,
-      ]}
+      style={style}
     >
-      <Text style={[styles.text, { color }, textStyle]}>{title}</Text>
+      <Animated.View
+        style={[
+          styles.button,
+          { backgroundColor, borderColor, opacity: disabled ? 0.6 : 1, transform: [{ scale }] },
+        ]}
+      >
+        <Text style={[styles.text, { color }, textStyle]}>{title}</Text>
+      </Animated.View>
     </TouchableOpacity>
   );
 }
