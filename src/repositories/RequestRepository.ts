@@ -3,9 +3,6 @@
  * Single point of contact between the app and the `parking_requests` table.
  * Contains ONLY Supabase queries — time-overlap validation and other business
  * rules belong in a service layer.
- *
- * Reads are apartment-scoped automatically by RLS (see schema.sql); writes
- * still need an explicit apartment_id since it's a NOT NULL column.
  */
 
 import { supabase } from '../lib/supabase';
@@ -19,7 +16,7 @@ import type {
 } from '../types/database';
 
 const REQUEST_WITH_PROFILE =
-  '*, profile:profiles!inner(id, full_name, email, apartment_id, created_at)' as const;
+  '*, profile:profiles!inner(id, full_name, email, created_at)' as const;
 
 export const RequestRepository = {
   /**
@@ -32,7 +29,6 @@ export const RequestRepository = {
     const { data, error } = await supabase
       .from('parking_requests')
       .insert({
-        apartment_id: input.apartmentId,
         user_id: input.userId,
         start_time: input.startTime,
         end_time: input.endTime,
@@ -75,9 +71,8 @@ export const RequestRepository = {
   },
 
   /**
-   * Returns all planned requests (within the caller's apartment) whose
-   * start_time is in the future, in ascending order. Optional userId
-   * scopes to a single roommate.
+   * Returns all planned requests whose start_time is in the future, in
+   * ascending order. Optional userId scopes to a single roommate.
    */
   async getUpcomingRequests(
     userId?: string,

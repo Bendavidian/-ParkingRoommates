@@ -8,7 +8,6 @@ import ScheduleScreen from '../screens/ScheduleScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import colors from '../theme/colors';
-import fonts from '../theme/fonts';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -25,23 +24,21 @@ export default function MainNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.accentStrong,
+        tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
+          backgroundColor: '#fff',
+          borderTopColor: '#e5e7eb',
           height: 72,
           paddingBottom: 8,
           paddingTop: 8,
         },
         tabBarLabelStyle: {
-          fontFamily: fonts.monoMedium,
-          fontSize: 10,
-          letterSpacing: 0.3,
+          fontSize: 12,
           writingDirection: 'rtl',
         },
         tabBarIcon: () => (
-          <Text style={{ fontSize: 17, marginBottom: -2, writingDirection: 'rtl' }}>
+          <Text style={{ fontSize: 18, marginBottom: -2, writingDirection: 'rtl' }}>
             {tabIcons[route.name as keyof MainTabParamList]}
           </Text>
         ),

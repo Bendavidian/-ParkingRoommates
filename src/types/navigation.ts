@@ -12,6 +12,5 @@ export type MainTabParamList = {
 
 export type RootStackParamList = {
   Auth: undefined;
-  ApartmentSetup: undefined;
   Main: undefined;
 };

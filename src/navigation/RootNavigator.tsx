@@ -5,31 +5,26 @@ import { RootStackParamList } from '../types/navigation';
 import { useAuth } from '../hooks/useAuth';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
-import ApartmentSetupScreen from '../screens/ApartmentSetupScreen';
-import colors from '../theme/colors';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
-  const { session, isDemoUser, loading, apartmentId, apartmentLoading } = useAuth();
-  const signedIn = !!session || isDemoUser;
+  const { session, isDemoUser, loading } = useAuth();
 
-  if (loading || (signedIn && apartmentLoading)) {
+  if (loading) {
     return (
       <View style={styles.splash}>
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color="#3b82f6" />
       </View>
     );
   }
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!signedIn ? (
-        <Stack.Screen name="Auth" component={AuthNavigator} />
-      ) : !apartmentId ? (
-        <Stack.Screen name="ApartmentSetup" component={ApartmentSetupScreen} />
-      ) : (
+      {session || isDemoUser ? (
         <Stack.Screen name="Main" component={MainNavigator} />
+      ) : (
+        <Stack.Screen name="Auth" component={AuthNavigator} />
       )}
     </Stack.Navigator>
   );
@@ -40,6 +35,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: '#fff',
   },
 });

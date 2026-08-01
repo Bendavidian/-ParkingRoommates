@@ -12,7 +12,6 @@ import { useAuth } from '../hooks/useAuth';
 import AppTextInput from '../components/AppTextInput';
 import AppButton from '../components/AppButton';
 import colors from '../theme/colors';
-import fonts from '../theme/fonts';
 
 type Mode = 'login' | 'signup';
 
@@ -24,7 +23,6 @@ export default function LoginScreen() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -33,7 +31,6 @@ export default function LoginScreen() {
     setFullName('');
     setEmail('');
     setPassword('');
-    setInviteCode('');
     setError('');
     setInfo('');
   }
@@ -67,7 +64,6 @@ export default function LoginScreen() {
           email.trim(),
           password,
           fullName.trim(),
-          inviteCode.trim() || undefined,
         );
         if (hebrewError) {
           setError(hebrewError);
@@ -91,13 +87,6 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <View style={styles.masthead}>
-          <View style={styles.logoTile}>
-            <Text style={styles.logoEmoji}>🅿️</Text>
-          </View>
-          <Text style={styles.eyebrow}>PARKING · ROOMMATES</Text>
-        </View>
-
         <View style={styles.card}>
           <Text style={styles.title}>חניית השותפים</Text>
           <Text style={styles.subtitle}>ניהול חנייה משותפת בזמן אמת</Text>
@@ -122,31 +111,17 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Full name + apartment invite code — signup only */}
+          {/* Full name — signup only */}
           {mode === 'signup' && (
-            <>
-              <AppTextInput
-                placeholder="שם מלא"
-                autoCapitalize="words"
-                autoCorrect={false}
-                value={fullName}
-                onChangeText={setFullName}
-                editable={!submitting}
-                style={styles.input}
-              />
-              <AppTextInput
-                placeholder="קוד הזמנה לדירה (אם יש לך)"
-                autoCapitalize="characters"
-                autoCorrect={false}
-                value={inviteCode}
-                onChangeText={setInviteCode}
-                editable={!submitting}
-                style={styles.input}
-              />
-              <Text style={styles.hintText}>
-                אין לך קוד? אפשר להשאיר ריק — תוכל ליצור דירה חדשה מיד אחרי ההרשמה.
-              </Text>
-            </>
+            <AppTextInput
+              placeholder="שם מלא"
+              autoCapitalize="words"
+              autoCorrect={false}
+              value={fullName}
+              onChangeText={setFullName}
+              editable={!submitting}
+              style={styles.input}
+            />
           )}
 
           <AppTextInput
@@ -177,15 +152,15 @@ export default function LoginScreen() {
             title={mode === 'login' ? 'התחברות' : 'יצירת חשבון'}
             onPress={handleSubmit}
             disabled={submitting}
-            showArrow
             style={styles.submitBtn}
           />
 
           <AppButton
             title="כניסה למצב הדגמה"
             onPress={handleDemo}
-            variant="outline"
+            variant="secondary"
             disabled={submitting}
+            style={styles.demoBtn}
           />
         </View>
       </ScrollView>
@@ -201,57 +176,35 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: colors.background,
   },
-  masthead: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    gap: 10,
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  logoTile: {
-    width: 36,
-    height: 36,
-    borderRadius: 11,
-    backgroundColor: colors.logoInk,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoEmoji: {
-    fontSize: 17,
-  },
-  eyebrow: {
-    fontFamily: fonts.monoBold,
-    fontSize: 11,
-    letterSpacing: 1.4,
-    color: colors.muted,
-  },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 22,
+    borderRadius: 24,
     padding: 24,
-    borderWidth: 1,
-    borderColor: colors.border,
+    shadowColor: colors.cardShadow,
+    shadowOpacity: 1,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 6,
   },
   title: {
-    fontFamily: fonts.displayExtraBold,
-    fontSize: 26,
-    color: colors.ink,
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.text,
     marginBottom: 6,
     textAlign: 'right',
     writingDirection: 'rtl',
   },
   subtitle: {
-    fontFamily: fonts.bodyRegular,
+    fontSize: 16,
     color: colors.muted,
-    fontSize: 15,
     marginBottom: 24,
     textAlign: 'right',
     writingDirection: 'rtl',
   },
   toggleRow: {
     flexDirection: 'row-reverse',
-    borderWidth: 1.5,
-    borderColor: colors.accent,
+    borderWidth: 1,
+    borderColor: colors.primary,
     borderRadius: 14,
     overflow: 'hidden',
     marginBottom: 22,
@@ -263,12 +216,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   toggleBtnActive: {
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
   },
   toggleText: {
-    fontFamily: fonts.bodyBold,
     fontSize: 14,
-    color: colors.accent,
+    fontWeight: '600',
+    color: colors.primary,
     writingDirection: 'rtl',
   },
   toggleTextActive: {
@@ -278,7 +231,6 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   errorText: {
-    fontFamily: fonts.bodySemiBold,
     color: colors.danger,
     fontSize: 13,
     marginBottom: 10,
@@ -286,23 +238,17 @@ const styles = StyleSheet.create({
     writingDirection: 'rtl',
   },
   infoText: {
-    fontFamily: fonts.bodySemiBold,
-    color: colors.accentStrong,
+    color: colors.primary,
     fontSize: 13,
     marginBottom: 10,
     textAlign: 'right',
     writingDirection: 'rtl',
   },
-  hintText: {
-    fontFamily: fonts.bodyRegular,
-    color: colors.muted,
-    fontSize: 12.5,
-    marginTop: -6,
-    marginBottom: 14,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-  },
   submitBtn: {
     marginBottom: 12,
+  },
+  demoBtn: {
+    borderWidth: 1,
+    borderColor: colors.secondary,
   },
 });

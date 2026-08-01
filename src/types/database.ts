@@ -12,25 +12,15 @@ export type RequestStatus = 'planned' | 'done' | 'cancelled';
 // Nullable columns (no NOT NULL in schema) are typed as `string | null`.
 // ---------------------------------------------------------------------------
 
-export type Apartment = {
-  id: string;
-  name: string;
-  invite_code: string;
-  owner_id: string | null;
-  created_at: string;
-};
-
 export type Profile = {
   id: string;
   full_name: string;
   email: string;
-  apartment_id: string | null;
   created_at: string;
 };
 
 export type ParkingSession = {
   id: string;
-  apartment_id: string;
   user_id: string;
   start_time: string;
   planned_end_time: string | null;
@@ -42,7 +32,6 @@ export type ParkingSession = {
 
 export type ParkingQueueItem = {
   id: string;
-  apartment_id: string;
   user_id: string;
   joined_at: string;
   status: QueueStatus;
@@ -50,7 +39,6 @@ export type ParkingQueueItem = {
 
 export type ParkingRequest = {
   id: string;
-  apartment_id: string;
   user_id: string;
   start_time: string;
   end_time: string;
@@ -61,7 +49,6 @@ export type ParkingRequest = {
 
 export type Notification = {
   id: string;
-  apartment_id: string;
   user_id: string;
   title: string;
   message: string;
@@ -93,14 +80,12 @@ export type ParkingRequestWithProfile = ParkingRequest & {
 // ---------------------------------------------------------------------------
 
 export type CreateSessionInput = {
-  apartmentId: string;
   userId: string;
   plannedEndTime?: string;
   note?: string;
 };
 
 export type CreateRequestInput = {
-  apartmentId: string;
   userId: string;
   startTime: string;
   endTime: string;

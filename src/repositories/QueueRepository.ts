@@ -3,9 +3,6 @@
  * Single point of contact between the app and the `parking_queue` table.
  * Contains ONLY Supabase queries — queue business rules (e.g. "already waiting"
  * guard) live in QueueService, not here.
- *
- * Reads are apartment-scoped automatically by RLS (see schema.sql); writes
- * still need an explicit apartment_id since it's a NOT NULL column.
  */
 
 import { supabase } from '../lib/supabase';
@@ -14,12 +11,11 @@ import type { Result } from '../lib/result';
 import type { ParkingQueueItem, ParkingQueueItemWithProfile } from '../types/database';
 
 const QUEUE_WITH_PROFILE =
-  '*, profile:profiles!inner(id, full_name, email, apartment_id, created_at)' as const;
+  '*, profile:profiles!inner(id, full_name, email, created_at)' as const;
 
 export const QueueRepository = {
   /**
-   * Returns all waiting queue items (within the caller's apartment) in
-   * FIFO order with profiles embedded.
+   * Returns all waiting queue items in FIFO order with profiles embedded.
    */
   async getQueue(): Promise<Result<ParkingQueueItemWithProfile[]>> {
     const { data, error } = await supabase
@@ -33,12 +29,12 @@ export const QueueRepository = {
   },
 
   /**
-   * Inserts a new waiting entry for the given user within their apartment.
+   * Inserts a new waiting entry for the given user.
    */
-  async joinQueue(apartmentId: string, userId: string): Promise<Result<ParkingQueueItem>> {
+  async joinQueue(userId: string): Promise<Result<ParkingQueueItem>> {
     const { data, error } = await supabase
       .from('parking_queue')
-      .insert({ apartment_id: apartmentId, user_id: userId, status: 'waiting' })
+      .insert({ user_id: userId, status: 'waiting' })
       .select()
       .single();
 

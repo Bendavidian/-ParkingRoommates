@@ -23,10 +23,9 @@ export const MockQueueRepository = {
     return ok(waiting);
   },
 
-  async joinQueue(apartmentId: string, userId: string): Promise<Result<ParkingQueueItem>> {
+  async joinQueue(userId: string): Promise<Result<ParkingQueueItem>> {
     const item: ParkingQueueItem = {
       id: nextMockId('queue'),
-      apartment_id: apartmentId,
       user_id: userId,
       joined_at: new Date().toISOString(),
       status: 'waiting',

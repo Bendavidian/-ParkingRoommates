@@ -1,36 +1,49 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import colors from '../theme/colors';
-import fonts from '../theme/fonts';
 
 type StatusBadgeProps = {
   label: string;
-  variant?: 'accent' | 'danger';
+  variant?: 'success' | 'danger' | 'primary' | 'secondary';
   style?: ViewStyle;
 };
 
-export default function StatusBadge({ label, variant = 'accent', style }: StatusBadgeProps) {
-  const backgroundColor = variant === 'danger' ? colors.danger : colors.accent;
+export default function StatusBadge({ label, variant = 'primary', style }: StatusBadgeProps) {
+  const backgroundColor =
+    variant === 'success'
+      ? '#dcfce7'
+      : variant === 'danger'
+      ? '#fee2e2'
+      : variant === 'secondary'
+      ? '#e0e7ff'
+      : '#dbeafe';
+
+  const textColor =
+    variant === 'success'
+      ? '#166534'
+      : variant === 'danger'
+      ? '#991b1b'
+      : variant === 'secondary'
+      ? '#3730a3'
+      : '#1d4ed8';
 
   return (
     <View style={[styles.badge, { backgroundColor }, style]}>
-      <Text style={styles.text}>{label}</Text>
+      <Text style={[styles.text, { color: textColor }]}>{label}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   badge: {
-    paddingHorizontal: 11,
-    paddingVertical: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 999,
     alignSelf: 'flex-end',
   },
   text: {
-    fontFamily: fonts.monoBold,
-    fontSize: 11,
-    letterSpacing: 0.5,
-    color: '#fff',
+    fontSize: 13,
+    fontWeight: '700',
     writingDirection: 'rtl',
   },
 });

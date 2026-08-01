@@ -10,7 +10,7 @@
 
 import { ok, err } from '../lib/result';
 import type { Result } from '../lib/result';
-import { getCurrentUserId, getCurrentApartmentId } from '../lib/auth';
+import { getCurrentUserId } from '../lib/auth';
 import { isDemoMode } from '../lib/demoMode';
 import { ParkingRepository } from '../repositories/ParkingRepository';
 import { QueueRepository } from '../repositories/QueueRepository';
@@ -49,10 +49,8 @@ export const ParkingService = {
   ): Promise<Result<ParkingSession>> {
     const userId = await getCurrentUserId();
     if (!userId) return err('You must be signed in to use the parking spot.');
-    const apartmentId = await getCurrentApartmentId();
-    if (!apartmentId) return err('You must join an apartment before using the parking spot.');
 
-    return parkingRepo().createSession({ apartmentId, userId, plannedEndTime, note });
+    return parkingRepo().createSession({ userId, plannedEndTime, note });
   },
 
   /**
