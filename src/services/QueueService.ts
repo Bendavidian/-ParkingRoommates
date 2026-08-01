@@ -9,7 +9,7 @@
 
 import { ok, err } from '../lib/result';
 import type { Result } from '../lib/result';
-import { getCurrentUserId } from '../lib/auth';
+import { getCurrentUserId, getCurrentApartmentId } from '../lib/auth';
 import { isDemoMode } from '../lib/demoMode';
 import { QueueRepository } from '../repositories/QueueRepository';
 import { MockQueueRepository } from '../repositories/mock/MockQueueRepository';
@@ -39,6 +39,8 @@ export const QueueService = {
   async joinQueue(): Promise<Result<ParkingQueueItem>> {
     const userId = await getCurrentUserId();
     if (!userId) return err('You must be signed in to join the queue.');
+    const apartmentId = await getCurrentApartmentId();
+    if (!apartmentId) return err('You must join an apartment before joining the queue.');
 
     const queueResult = await queueRepo().getQueue();
     if (!queueResult.ok) return queueResult;
@@ -46,7 +48,7 @@ export const QueueService = {
     const alreadyWaiting = queueResult.data.some((item) => item.user_id === userId);
     if (alreadyWaiting) return err('You are already in the queue.');
 
-    return queueRepo().joinQueue(userId);
+    return queueRepo().joinQueue(apartmentId, userId);
   },
 
   /**

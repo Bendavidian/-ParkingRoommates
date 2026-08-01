@@ -1,15 +1,23 @@
 const colors = {
-  background: '#f3f4f6',
+  background: '#f5f7f4',
   surface: '#ffffff',
-  primary: '#2563eb',
-  secondary: '#1d4ed8',
-  success: '#16a34a',
+
+  ink: '#10231a',
+  inkSoft: '#3d4a43',
+  muted: '#67766e',
+  placeholder: '#93a099',
+
+  border: '#e0e6e1',
+  borderStrong: '#c7d0c9',
+
+  accent: '#0f9d6b',
+  accentStrong: '#0a7350',
+  accentSoft: '#e1f5ec',
+
   danger: '#dc2626',
-  text: '#111827',
-  muted: '#6b7280',
-  border: '#e5e7eb',
-  cardShadow: 'rgba(15, 23, 42, 0.08)',
-  placeholder: '#9ca3af',
+  dangerSoft: '#fdecec',
+
+  logoInk: '#0e1a15',
 };
 
 export default colors;
