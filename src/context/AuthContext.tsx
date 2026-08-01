@@ -1,7 +1,15 @@
-import React, { createContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { Session, User, AuthError } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { setDemoMode } from '../lib/demoMode';
+import { getCurrentApartmentId } from '../lib/auth';
+
+// Demo mode has no Supabase session to persist, so it needs its own flag —
+// without this, closing the app would drop back to the login screen every
+// time even though real accounts stay signed in via Supabase's own
+// AsyncStorage-backed session persistence.
+const DEMO_MODE_STORAGE_KEY = 'parking-roommates:demo-mode';
 
 // ---------------------------------------------------------------------------
 // Hebrew error mapping — keeps all Supabase error strings out of UI components
@@ -49,10 +57,21 @@ export type AuthContextValue = {
   loading: boolean;
   /** True when the user chose "demo mode" — no real Supabase session exists */
   isDemoUser: boolean;
+  /** The signed-in user's apartment id, or null if they haven't created/joined one yet. */
+  apartmentId: string | null;
+  /** True while apartmentId is being (re)resolved after a session or demo-mode change. */
+  apartmentLoading: boolean;
   signIn: (email: string, password: string) => Promise<SignInResult>;
-  signUp: (email: string, password: string, fullName: string) => Promise<SignUpResult>;
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string,
+    inviteCode?: string,
+  ) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
   demoSignIn: () => void;
+  /** Re-checks apartment membership — call after creating/joining an apartment. */
+  refreshApartmentId: () => Promise<void>;
 };
 
 // ---------------------------------------------------------------------------
@@ -65,18 +84,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDemoUser, setIsDemoUser] = useState(false);
+  const [apartmentId, setApartmentId] = useState<string | null>(null);
+  const [apartmentLoading, setApartmentLoading] = useState(false);
 
   // Listen to real Supabase auth state. Fires immediately with the cached
   // session from AsyncStorage so loading is resolved on first emission.
+  // Also restores demo mode from its own AsyncStorage flag, since it has no
+  // real Supabase session to persist it for us.
   useEffect(() => {
+    let mounted = true;
+
+    AsyncStorage.getItem(DEMO_MODE_STORAGE_KEY).then((stored) => {
+      if (mounted && stored === 'true') {
+        setDemoMode(true);
+        setIsDemoUser(true);
+      }
+    });
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setLoading(false);
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
+
+  const refreshApartmentId = useCallback(async () => {
+    if (!session && !isDemoUser) {
+      setApartmentId(null);
+      return;
+    }
+    setApartmentLoading(true);
+    const id = await getCurrentApartmentId();
+    setApartmentId(id);
+    setApartmentLoading(false);
+  }, [session, isDemoUser]);
+
+  // Re-check apartment membership whenever the signed-in identity changes.
+  useEffect(() => {
+    refreshApartmentId();
+  }, [refreshApartmentId]);
 
   async function signIn(email: string, password: string): Promise<SignInResult> {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -87,11 +138,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     password: string,
     fullName: string,
+    inviteCode?: string,
   ): Promise<SignUpResult> {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: {
+        data: {
+          full_name: fullName,
+          ...(inviteCode ? { invite_code: inviteCode } : {}),
+        },
+      },
     });
     return {
       hebrewError: toHebrewError(error),
@@ -105,6 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Demo mode has no real Supabase session — just clear the flag
       setDemoMode(false);
       setIsDemoUser(false);
+      await AsyncStorage.removeItem(DEMO_MODE_STORAGE_KEY);
       return;
     }
     await supabase.auth.signOut();
@@ -113,6 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function demoSignIn(): void {
     setDemoMode(true);
     setIsDemoUser(true);
+    AsyncStorage.setItem(DEMO_MODE_STORAGE_KEY, 'true');
   }
 
   return (
@@ -122,10 +181,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: session?.user ?? null,
         loading,
         isDemoUser,
+        apartmentId,
+        apartmentLoading,
         signIn,
         signUp,
         signOut,
         demoSignIn,
+        refreshApartmentId,
       }}
     >
       {children}

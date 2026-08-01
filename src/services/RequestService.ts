@@ -9,7 +9,7 @@
 
 import { ok, err } from '../lib/result';
 import type { Result } from '../lib/result';
-import { getCurrentUserId } from '../lib/auth';
+import { getCurrentUserId, getCurrentApartmentId } from '../lib/auth';
 import { isDemoMode } from '../lib/demoMode';
 import { RequestRepository } from '../repositories/RequestRepository';
 import { MockRequestRepository } from '../repositories/mock/MockRequestRepository';
@@ -40,11 +40,13 @@ export const RequestService = {
   async createRequest(startTime: string, endTime: string, note?: string): Promise<Result<ParkingRequest>> {
     const userId = await getCurrentUserId();
     if (!userId) return err('You must be signed in to add a request.');
+    const apartmentId = await getCurrentApartmentId();
+    if (!apartmentId) return err('You must join an apartment before adding a request.');
     if (new Date(endTime) <= new Date(startTime)) {
       return err('End time must be after start time.');
     }
 
-    return requestRepo().createParkingRequest({ userId, startTime, endTime, note });
+    return requestRepo().createParkingRequest({ apartmentId, userId, startTime, endTime, note });
   },
 
   /**

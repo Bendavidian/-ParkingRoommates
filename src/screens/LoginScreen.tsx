@@ -24,6 +24,7 @@ export default function LoginScreen() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -32,6 +33,7 @@ export default function LoginScreen() {
     setFullName('');
     setEmail('');
     setPassword('');
+    setInviteCode('');
     setError('');
     setInfo('');
   }
@@ -65,6 +67,7 @@ export default function LoginScreen() {
           email.trim(),
           password,
           fullName.trim(),
+          inviteCode.trim() || undefined,
         );
         if (hebrewError) {
           setError(hebrewError);
@@ -119,17 +122,31 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Full name — signup only */}
+          {/* Full name + apartment invite code — signup only */}
           {mode === 'signup' && (
-            <AppTextInput
-              placeholder="שם מלא"
-              autoCapitalize="words"
-              autoCorrect={false}
-              value={fullName}
-              onChangeText={setFullName}
-              editable={!submitting}
-              style={styles.input}
-            />
+            <>
+              <AppTextInput
+                placeholder="שם מלא"
+                autoCapitalize="words"
+                autoCorrect={false}
+                value={fullName}
+                onChangeText={setFullName}
+                editable={!submitting}
+                style={styles.input}
+              />
+              <AppTextInput
+                placeholder="קוד הזמנה לדירה (אם יש לך)"
+                autoCapitalize="characters"
+                autoCorrect={false}
+                value={inviteCode}
+                onChangeText={setInviteCode}
+                editable={!submitting}
+                style={styles.input}
+              />
+              <Text style={styles.hintText}>
+                אין לך קוד? אפשר להשאיר ריק — תוכל ליצור דירה חדשה מיד אחרי ההרשמה.
+              </Text>
+            </>
           )}
 
           <AppTextInput
@@ -273,6 +290,15 @@ const styles = StyleSheet.create({
     color: colors.accentStrong,
     fontSize: 13,
     marginBottom: 10,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  hintText: {
+    fontFamily: fonts.bodyRegular,
+    color: colors.muted,
+    fontSize: 12.5,
+    marginTop: -6,
+    marginBottom: 14,
     textAlign: 'right',
     writingDirection: 'rtl',
   },

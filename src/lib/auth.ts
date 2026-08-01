@@ -7,6 +7,7 @@
 
 import { supabase } from './supabase';
 import { isDemoMode, DEMO_USER_ID } from './demoMode';
+import { MOCK_APARTMENT_ID } from '../repositories/mock/mockData';
 
 /**
  * Reads the current user ID from the locally cached session.
@@ -23,4 +24,27 @@ export async function getCurrentUserId(): Promise<string | null> {
     data: { session },
   } = await supabase.auth.getSession();
   return session?.user.id ?? null;
+}
+
+/**
+ * Reads the current user's apartment_id — every write (session, queue,
+ * request, notification) needs this to tag the row with the right
+ * household. Returns null if signed out or if the user hasn't created/
+ * joined an apartment yet (RootNavigator gates on that before showing
+ * MainNavigator, so services should rarely see null here in practice).
+ */
+export async function getCurrentApartmentId(): Promise<string | null> {
+  if (isDemoMode()) return MOCK_APARTMENT_ID;
+
+  const userId = await getCurrentUserId();
+  if (!userId) return null;
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('apartment_id')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data.apartment_id;
 }

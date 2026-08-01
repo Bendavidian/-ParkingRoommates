@@ -14,6 +14,8 @@ import type {
 } from '../../types/database';
 import { mockProfiles, mockSessions, nextMockId } from './mockData';
 
+const HISTORY_RETENTION_DAYS = 30;
+
 function withProfile(session: ParkingSession): ParkingSessionWithProfile {
   return { ...session, profile: mockProfiles[session.user_id] };
 }
@@ -31,6 +33,7 @@ export const MockParkingRepository = {
 
     const session: ParkingSession = {
       id: nextMockId('session'),
+      apartment_id: input.apartmentId,
       user_id: input.userId,
       start_time: new Date().toISOString(),
       planned_end_time: input.plannedEndTime ?? null,
@@ -56,8 +59,11 @@ export const MockParkingRepository = {
     userId?: string,
     limit = 100,
   ): Promise<Result<ParkingSessionWithProfile[]>> {
+    const cutoff = new Date(Date.now() - HISTORY_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+
     const rows = mockSessions
       .filter((s) => s.status !== 'active')
+      .filter((s) => s.start_time >= cutoff)
       .filter((s) => !userId || s.user_id === userId)
       .sort((a, b) => (a.start_time < b.start_time ? 1 : -1))
       .slice(0, limit)

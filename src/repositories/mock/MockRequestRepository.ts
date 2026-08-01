@@ -27,6 +27,7 @@ export const MockRequestRepository = {
 
     const request: ParkingRequest = {
       id: nextMockId('request'),
+      apartment_id: input.apartmentId,
       user_id: input.userId,
       start_time: input.startTime,
       end_time: input.endTime,
