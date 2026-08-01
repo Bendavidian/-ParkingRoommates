@@ -1,76 +1,157 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import ScreenContainer from '../components/ScreenContainer';
 import AppCard from '../components/AppCard';
 import SectionTitle from '../components/SectionTitle';
+import EmptyState from '../components/EmptyState';
+import Avatar from '../components/Avatar';
+import { StatisticsService } from '../services/StatisticsService';
+import { formatMinutes } from '../utils/dateUtils';
 import colors from '../theme/colors';
 import fonts from '../theme/fonts';
-
-const stats = [
-  { label: 'שבוע אחרון', values: [{ name: 'בן', hours: 12 }, { name: 'דני', hours: 9 }, { name: 'אורי', hours: 7 }] },
-  { label: 'שבועיים אחרונים', values: [{ name: 'בן', hours: 22 }, { name: 'דני', hours: 18 }, { name: 'אורי', hours: 14 }] },
-  { label: 'חודש אחרון', values: [{ name: 'בן', hours: 36 }, { name: 'דני', hours: 28 }, { name: 'אורי', hours: 20 }] },
-];
+import type { AllStats } from '../services/StatisticsService';
 
 export default function StatsScreen() {
+  const [stats, setStats] = useState<AllStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    const result = await StatisticsService.getAllStats();
+    if (result.ok) setStats(result.data);
+    else setErrorMsg(result.error);
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    loadData().finally(() => setLoading(false));
+  }, [loadData]);
+
+  const maxMinutes = stats ? Math.max(1, ...stats.roommates.map((r) => r.totalMinutes)) : 1;
+
   return (
     <ScreenContainer>
-      <SectionTitle title="סטטיסטיקות חנייה" subtitle="הצגה חזותית של שעות החנייה" />
-      {stats.map((item) => (
-        <AppCard key={item.label} style={styles.card}>
-          <Text style={styles.periodTitle}>{item.label}</Text>
-          {item.values.map((row) => {
-            const ratio = Math.min(row.hours / 36, 1);
+      <SectionTitle title="סטטיסטיקות חנייה" subtitle="כמה זמן כל שותף השתמש בחניה" />
+
+      {loading ? (
+        <ActivityIndicator color={colors.accent} style={styles.loading} />
+      ) : errorMsg ? (
+        <Text style={styles.errorText}>{errorMsg}</Text>
+      ) : !stats || stats.roommates.length === 0 ? (
+        <EmptyState message="עדיין אין מספיק נתונים לסטטיסטיקה" />
+      ) : (
+        <>
+          <AppCard style={styles.summaryCard}>
+            <View style={styles.summaryRow}>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryValue}>{stats.totalSessionsAll}</Text>
+                <Text style={styles.summaryLabel}>חניות סה"כ</Text>
+              </View>
+              <View style={styles.summaryDivider} />
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryValue}>{formatMinutes(stats.totalMinutesAll)}</Text>
+                <Text style={styles.summaryLabel}>זמן חניה סה"כ</Text>
+              </View>
+            </View>
+          </AppCard>
+
+          {stats.roommates.map((row) => {
+            const ratio = row.totalMinutes / maxMinutes;
             return (
-              <View key={row.name} style={styles.statRow}>
-                <View style={styles.statLabel}>
-                  <Text style={styles.statName}>{row.name}</Text>
-                  <Text style={styles.statValue}>{row.hours} שעות</Text>
+              <AppCard key={row.userId} style={styles.card}>
+                <View style={styles.headerRow}>
+                  <Avatar seed={row.userId} label={row.fullName} size={30} />
+                  <View style={styles.headerText}>
+                    <Text style={styles.name}>{row.fullName}</Text>
+                    <Text style={styles.subline}>
+                      {row.totalSessions} חניות · בממוצע {formatMinutes(row.averageMinutes)}
+                    </Text>
+                  </View>
+                  <Text style={styles.totalValue}>{formatMinutes(row.totalMinutes)}</Text>
                 </View>
                 <View style={styles.progressBarBackground}>
-                  <View style={[styles.progressBarFill, { width: `${ratio * 100}%` }]} />
+                  <View style={[styles.progressBarFill, { width: `${Math.max(4, ratio * 100)}%` }]} />
                 </View>
-              </View>
+              </AppCard>
             );
           })}
-        </AppCard>
-      ))}
+        </>
+      )}
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    marginBottom: 16,
+  loading: {
+    marginTop: 24,
   },
-  periodTitle: {
-    fontFamily: fonts.monoBold,
-    fontSize: 11,
-    letterSpacing: 1,
-    color: colors.muted,
-    marginBottom: 16,
+  errorText: {
+    fontFamily: fonts.bodySemiBold,
+    color: colors.danger,
+    fontSize: 14,
     textAlign: 'right',
     writingDirection: 'rtl',
   },
-  statRow: {
+  summaryCard: {
     marginBottom: 16,
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.accentSoft,
   },
-  statLabel: {
+  summaryRow: {
     flexDirection: 'row-reverse',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'center',
   },
-  statName: {
+  summaryItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+  },
+  summaryDivider: {
+    width: 1,
+    height: 34,
+    backgroundColor: colors.borderStrong,
+  },
+  summaryValue: {
+    fontFamily: fonts.monoBold,
+    fontSize: 18,
+    color: colors.accentStrong,
+  },
+  summaryLabel: {
+    fontFamily: fonts.bodyRegular,
+    fontSize: 12.5,
+    color: colors.inkSoft,
+  },
+  card: {
+    marginBottom: 14,
+  },
+  headerRow: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  headerText: {
+    flex: 1,
+  },
+  name: {
     fontFamily: fonts.bodyBold,
     color: colors.ink,
     fontSize: 15,
+    textAlign: 'right',
     writingDirection: 'rtl',
   },
-  statValue: {
-    fontFamily: fonts.monoMedium,
+  subline: {
+    fontFamily: fonts.bodyRegular,
     color: colors.muted,
-    fontSize: 14,
+    fontSize: 12.5,
+    marginTop: 2,
+    textAlign: 'right',
     writingDirection: 'rtl',
+  },
+  totalValue: {
+    fontFamily: fonts.monoBold,
+    color: colors.ink,
+    fontSize: 14,
   },
   progressBarBackground: {
     width: '100%',

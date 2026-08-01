@@ -8,9 +8,15 @@
 
 import { ok, err } from '../lib/result';
 import type { Result } from '../lib/result';
+import { isDemoMode } from '../lib/demoMode';
 import { ParkingRepository } from '../repositories/ParkingRepository';
+import { MockParkingRepository } from '../repositories/mock/MockParkingRepository';
 import { getDurationInMinutes } from '../utils/dateUtils';
 import type { Profile } from '../types/database';
+
+function parkingRepo() {
+  return isDemoMode() ? MockParkingRepository : ParkingRepository;
+}
 
 export type UserStats = {
   userId: string;
@@ -42,7 +48,7 @@ export const StatisticsService = {
    * pay a single round-trip regardless of how many roommates exist.
    */
   async getAllStats(): Promise<Result<AllStats>> {
-    const historyResult = await ParkingRepository.getHistory(undefined, 1000);
+    const historyResult = await parkingRepo().getHistory(undefined, 1000);
     if (!historyResult.ok) return historyResult;
 
     const sessions = historyResult.data.filter((s) => s.status === 'finished');

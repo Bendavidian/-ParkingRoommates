@@ -23,3 +23,14 @@ export function getDurationInMinutes(startIso: string, endIso?: string): number 
   const end = endIso ? new Date(endIso) : new Date();
   return Math.max(0, differenceInMinutes(end, start));
 }
+
+/**
+ * "1h 35m" style duration label in Hebrew, e.g. "שעה ו-35 דק'" / "45 דק'".
+ */
+export function formatMinutes(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours === 0) return `${minutes} דק'`;
+  if (minutes === 0) return `${hours} שעות`;
+  return `${hours} שעות ו-${minutes} דק'`;
+}
